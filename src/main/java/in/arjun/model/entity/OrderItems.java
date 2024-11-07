@@ -17,6 +17,7 @@ public class OrderItems {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String imageUrl;
+    private String name;
     private Double price;
     private Long quantity;
 

@@ -19,4 +19,7 @@ public interface CustomerClient {
 
     @PostMapping("/find-email/{email}")
     public boolean findCustomerByEmail(@PathVariable("email") String email);
+
+    @GetMapping("/customer/{id}")
+    public Customer findCustomerById(@PathVariable("id") Long id);
 }

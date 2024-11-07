@@ -8,24 +8,24 @@ import in.arjun.client.CustomerClient;
 import in.arjun.model.entity.OrderData;
 import in.arjun.model.entity.OrderItems;
 import in.arjun.model.request.*;
-import in.arjun.model.response.AddressResponse;
-import in.arjun.model.response.CustomerResponse;
-import in.arjun.model.response.DashBoardResponse;
-import in.arjun.model.response.OrderResponse;
+import in.arjun.model.response.*;
 import in.arjun.service.OrderDataService;
 import in.arjun.service.OrderItemsService;
 import in.arjun.service.TrackingNumberGenerator;
+import jakarta.transaction.Transactional;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
+@RequestMapping("/order")
 public class OrderController {
 
     @Autowired
@@ -49,6 +49,7 @@ public class OrderController {
     private OrderItemsService itemsService;
 
     @PostMapping("/api/checkout-details")
+    @Transactional
     public OrderResponse getCheckoutDetails(@RequestBody CheckoutDetails checkoutDetails) throws RazorpayException {
 
         Customer customer = checkoutDetails.getCustomer();
@@ -106,7 +107,12 @@ public class OrderController {
         if (orderByPaymentOrderId.isPresent()){
             OrderData orderData = orderByPaymentOrderId.get();
             orderData.setOrderStatus(paymentInfo.getStatus());
+            if (paymentInfo.getStatus().equalsIgnoreCase("success")){
+                orderData.setDeliveryDate(orderByPaymentOrderId.get().getOrderCreatedDate().plusDays(2));
+                orderDataService.saveOrder(orderData);
+            }
             orderDataService.saveOrder(orderData);
+
         }
     }
 
@@ -129,6 +135,13 @@ public class OrderController {
         if (customerByEmail)
             return true;
         return false;
+    }
+
+    @GetMapping("/orderData")
+    public List<NotificationResponse> getOrdersByDeliveryDate(){
+        List<OrderData> ordersByDeliveryDate = orderDataService.getOrdersByDeliveryDate();
+
+      return  ordersByDeliveryDate.stream().map(NotificationResponse::fromOrderData).toList();
     }
 
 }
